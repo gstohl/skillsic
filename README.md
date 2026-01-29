@@ -2,7 +2,14 @@
 
 > Safety-first skill discovery for Claude Code, powered by ICP + Phala TEE
 
-**[skillsic.com](https://skillsic.com)** is a curation platform for Claude Code skills. We index 104k+ skills, analyze them with Claude in a Trusted Execution Environment (TEE), and provide safety ratings before you install.
+**[skillsic.com](https://skillsic.com)** is a community-driven curation platform for Claude Code skills. We've indexed 104k+ skills from the ecosystem - anyone can analyze them using their own API key, and all analysis results are stored on-chain for everyone to benefit from.
+
+## How It Works
+
+1. **Browse** 104k+ indexed skills at [skillsic.com](https://skillsic.com)
+2. **Analyze** any skill using your own Anthropic API key (encrypted in-browser, processed in TEE)
+3. **Benefit** from community analysis - all results stored on-chain permanently
+4. **Install** safely with `npx skillsic add` - warns on dangerous, blocks malicious
 
 ## Quick Start
 
@@ -25,36 +32,46 @@ npx skillsic stats
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   skillsic.com  │────▶│  ICP Canister    │────▶│   Phala TEE     │
-│   (Frontend)    │     │  (Backend)       │     │   (AI Analysis) │
+│   (Frontend)    │     │  (On-Chain)      │     │   (AI Analysis) │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
         │                       │
-        │                       │
+        │     Your API key      │
+        │   (encrypted in TEE)  │
         ▼                       ▼
 ┌─────────────────┐     ┌──────────────────┐
-│  npm: skillsic  │────▶│  104k+ Skills    │
-│  (CLI Tool)     │     │  (Indexed)       │
+│  npm: skillsic  │     │  Analysis stored │
+│  (CLI Tool)     │     │  on-chain forever│
 └─────────────────┘     └──────────────────┘
 ```
+
+## Key Features
+
+- **Community-Powered Analysis**: Use your API key to analyze skills, results benefit everyone
+- **On-Chain Storage**: All analysis history stored permanently on ICP
+- **TEE Security**: Your API key is encrypted in-browser, decrypted only inside Phala TEE
+- **Multi-Model Support**: Analyze with Haiku (fast), Sonnet (balanced), or Opus (thorough)
+- **Analysis History**: See how ratings evolved over time with different models
+- **No Central Authority**: Decentralized, transparent, community-driven
 
 ## Components
 
 ### `/canister` - ICP Backend (Rust)
 - Skill index storage (104k+ skills from skills.sh ecosystem)
-- Multi-model analysis tracking (Haiku → Sonnet → Opus)
+- On-chain analysis history (immutable, transparent)
+- Multi-model tracking (Haiku → Sonnet → Opus)
 - TEE worker authentication
-- Query API for frontend and CLI
 
 ### `/frontend` - Web UI (Svelte + TypeScript)
 - Browse & search skills at [skillsic.com](https://skillsic.com)
-- View AI safety analysis & ratings
+- Trigger analysis with your own API key
+- View community analysis & ratings
 - Terminal-inspired aesthetic
-- Self-hosted fonts (no external dependencies)
 
 ### `/tee-worker` - Phala TEE Worker (TypeScript)
 - Runs Claude analysis in Trusted Execution Environment
-- Secure API key storage (never exposed)
+- Your API key never leaves the secure enclave
 - Verifiable attestation
-- Multi-model support (Haiku, Sonnet, Opus)
+- Results submitted back to ICP canister
 
 ### `/npm-package` - CLI Tool (`skillsic`)
 - `npx skillsic add <skill>` - Search, check safety, install
@@ -68,7 +85,6 @@ npx skillsic stats
 
 ### `/skillsic` - Meta Skill
 - SKILL.md that teaches Claude Code how to use skillsic
-- Self-referential bootstrap
 
 ## Safety Ratings
 

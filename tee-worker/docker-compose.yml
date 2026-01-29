@@ -1,0 +1,23 @@
+# Phala Cloud CVM deployment configuration
+# Deploy with: phala deploy --compose docker-compose.yml
+#
+# The dstack.sock volume mount gives the worker access to the TEE's
+# Key Management Service for deterministic key derivation and attestation.
+
+services:
+  worker:
+    image: gstohl/skillsic-tee-worker:v1.9.5
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    volumes:
+      # dstack v0.5.x socket — provides access to TEE KMS and attestation
+      - /var/run/dstack.sock:/var/run/dstack.sock
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

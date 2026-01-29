@@ -1,0 +1,19 @@
+[
+  {
+    "match": "**/*",
+    "headers": {
+      "X-Content-Type-Options": "nosniff"
+    },
+    "allow_raw_access": true,
+    "enable_aliasing": true,
+    "disable_security_policy_warning": true
+  },
+  {
+    "match": ".well-known",
+    "ignore": false
+  },
+  {
+    "match": ".well-known/*",
+    "ignore": false
+  }
+]

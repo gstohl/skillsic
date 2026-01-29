@@ -1,0 +1,363 @@
+type AnalysisModel = variant { Haiku; Sonnet; Opus };
+
+// Rating System
+type RatingTopic = variant {
+  Quality;
+  Documentation;
+  Maintainability;
+  Completeness;
+  Security;
+  Malicious;
+  Privacy;
+  Usability;
+  Compatibility;
+  Performance;
+  Trustworthiness;
+  Maintenance;
+  Community;
+};
+
+type TopicRating = record {
+  topic: RatingTopic;
+  score: nat8;
+  confidence: nat8;
+  reasoning: text;
+};
+
+type FlagType = variant {
+  SecurityRisk;
+  MaliciousPattern;
+  PrivacyConcern;
+  Unmaintained;
+  Deprecated;
+  ExcessivePermissions;
+  UnverifiedSource;
+  KnownVulnerability;
+};
+
+type FlagSeverity = variant {
+  Info;
+  Warning;
+  Critical;
+};
+
+type RatingFlag = record {
+  flag_type: FlagType;
+  severity: FlagSeverity;
+  message: text;
+};
+
+type Ratings = record {
+  overall: float32;
+  topics: vec TopicRating;
+  flags: vec RatingFlag;
+};
+
+// Dependencies
+type McpDependency = record {
+  name: text;
+  package: text;
+  required: bool;
+  indexed: bool;
+  verified: bool;
+  ratings: opt Ratings;
+};
+
+type SoftwareDependency = record {
+  name: text;
+  install_cmd: opt text;
+  url: opt text;
+  required: bool;
+  ratings: opt Ratings;
+};
+
+// Skill Files
+type SkillFileType = variant {
+  SkillMd;
+  Reference;
+  Asset;
+  Config;
+  Other;
+};
+
+type SkillFile = record {
+  path: text;
+  content: text;
+  checksum: text;
+  size_bytes: nat64;
+  file_type: SkillFileType;
+};
+
+// File Version History (for tracking changes)
+type SkillFileVersion = record {
+  path: text;
+  checksum: text;
+  size_bytes: nat64;
+  fetched_at: nat64;
+  fetched_by: principal;
+  source_url: opt text;
+};
+
+// Referenced Files & URLs (detected in SKILL.md by AI)
+type ReferencedFile = record {
+  path: text;
+  context: text;
+  resolved: bool;
+};
+
+type ReferencedUrl = record {
+  url: text;
+  context: text;
+  fetched: bool;
+};
+
+// Skill Analysis
+type SkillAnalysis = record {
+  ratings: Ratings;
+  primary_category: text;
+  secondary_categories: vec text;
+  tags: vec text;
+  has_mcp: bool;
+  provides_mcp: bool;
+  required_mcps: vec McpDependency;
+  software_deps: vec SoftwareDependency;
+  has_references: bool;
+  has_assets: bool;
+  estimated_token_usage: nat32;
+  summary: text;
+  strengths: vec text;
+  weaknesses: vec text;
+  use_cases: vec text;
+  compatibility_notes: text;
+  prerequisites: vec text;
+  referenced_files: vec ReferencedFile;
+  referenced_urls: vec ReferencedUrl;
+  analyzed_at: nat64;
+  analyzed_by: principal;
+  model_used: text;
+  analysis_version: text;
+  tee_worker_version: opt text;
+  prompt_version: opt text;
+};
+
+// Skill
+type Skill = record {
+  id: text;
+  name: text;
+  description: text;
+  owner: text;
+  repo: text;
+  github_url: opt text;
+  skill_md_url: opt text;
+  skill_md_content: opt text;
+  files: vec SkillFile;
+  files_checksum: opt text;
+  stars: nat32;
+  analysis: opt SkillAnalysis;
+  analysis_history: vec SkillAnalysis;
+  file_history: vec SkillFileVersion;
+  install_count: nat64;
+  created_at: nat64;
+  updated_at: nat64;
+  source: text;
+};
+
+type SkillSearchResult = record {
+  skill: Skill;
+  relevance_score: float32;
+};
+
+type UserProfile = record {
+  "principal": principal;
+  anthropic_api_key: opt text;
+  encrypted_anthropic_key: opt text;
+  analyses_performed: nat64;
+  created_at: nat64;
+  last_active: nat64;
+};
+
+type AnalysisResult = record {
+  success: bool;
+  skill_id: text;
+  analysis: opt SkillAnalysis;
+  error: opt text;
+};
+
+// Job Queue
+type JobStatus = variant { Pending; Processing; Completed; Failed };
+
+type PendingJobFile = record {
+  path: text;
+  content: text;
+};
+
+type PendingJob = record {
+  job_id: text;
+  skill_id: text;
+  skill_name: text;
+  skill_description: text;
+  skill_owner: text;
+  skill_repo: text;
+  skill_md_content: opt text;
+  skill_files: vec PendingJobFile;
+  model: text;
+  encrypted_api_key: text;
+};
+
+type AnalysisPrompt = record {
+  id: text;
+  name: text;
+  version: text;
+  prompt_template: text;
+  created_by: principal;
+  created_at: nat64;
+  is_default: bool;
+};
+
+// Enrichment Job Queue
+type EnrichmentJobStatus = variant { Pending; Processing; Completed; Failed; NotFound };
+
+type PendingEnrichmentJob = record {
+  job_id: text;
+  skill_id: text;
+  owner: text;
+  repo: text;
+  name: text;
+  auto_analyze: bool;
+};
+
+type EnrichmentFile = record {
+  path: text;
+  content: text;
+};
+
+type EnrichmentResult = record {
+  found: bool;
+  content: opt text;
+  source_url: opt text;
+  files_found: vec EnrichmentFile;
+};
+
+// Verification Results
+type FileVerifyResult = record {
+  path: text;
+  is_valid: bool;
+  stored_checksum: text;
+  provided_checksum: text;
+};
+
+type SkillVerifyResult = record {
+  skill_id: text;
+  is_valid: bool;
+  files_checked: nat32;
+  files_valid: nat32;
+  files_invalid: vec FileVerifyResult;
+  missing_files: vec text;
+  extra_files: vec text;
+};
+
+service : {
+  // User auth
+  whoami: () -> (principal) query;
+  is_logged_in: () -> (bool) query;
+  get_my_profile: () -> (opt UserProfile) query;
+  set_my_anthropic_key: (text) -> (variant { Ok; Err: text });
+  remove_my_anthropic_key: () -> (variant { Ok; Err: text });
+  has_anthropic_key: () -> (bool) query;
+
+  // TEE-encrypted key management
+  set_my_encrypted_key: (text) -> (variant { Ok; Err: text });
+
+  // Admin
+  add_admin: (principal) -> (variant { Ok; Err: text });
+  set_analysis_enabled: (bool) -> (variant { Ok; Err: text });
+  set_tee_worker_url: (text) -> (variant { Ok; Err: text });
+  get_tee_worker_url: () -> (opt text) query;
+  is_tee_analysis_available: () -> (bool) query;
+
+  // Prompt Management (admin)
+  create_prompt: (text, text, text, text) -> (variant { Ok: text; Err: text });
+  set_default_prompt: (text) -> (variant { Ok; Err: text });
+  delete_prompt: (text) -> (variant { Ok; Err: text });
+  get_prompt: (text) -> (opt AnalysisPrompt) query;
+  list_prompts: () -> (vec AnalysisPrompt) query;
+  get_default_prompt: () -> (opt AnalysisPrompt) query;
+
+  // Skills
+  add_skill: (Skill) -> (variant { Ok: text; Err: text });
+  add_skills_batch: (vec Skill) -> (variant { Ok: nat32; Err: text });
+  add_skills_if_new: (vec Skill) -> (variant { Ok: nat32; Err: text });
+  get_skill: (text) -> (opt Skill) query;
+  list_skills: () -> (vec Skill) query;
+  list_skills_page: (nat32, nat32) -> (vec Skill, nat32) query;
+  list_skills_filtered: (nat32, nat32, text, text, text) -> (vec Skill, nat32) query;
+  search_skills: (text) -> (vec SkillSearchResult) query;
+  get_skills_by_category: (text) -> (vec Skill) query;
+  get_skills_with_dependencies: () -> (vec Skill) query;
+  get_skills_providing_mcp: () -> (vec Skill) query;
+  get_top_rated_skills: (nat32) -> (vec Skill) query;
+  get_categories: () -> (vec text) query;
+  get_unanalyzed_skills: () -> (vec Skill) query;
+  get_install_command: (text) -> (opt text) query;
+  record_install: (text) -> (variant { Ok: nat64; Err: text });
+  reset_all_install_counts: () -> (variant { Ok: nat32; Err: text });
+  clear_analysis: (text) -> (variant { Ok; Err: text });
+  clear_all_analyses: () -> (variant { Ok: nat32; Err: text });
+  sync_install_counts: (vec record { text; nat64 }) -> (variant { Ok: nat32; Err: text });
+  update_skill_md: (text, opt text) -> (variant { Ok; Err: text });
+  update_skill_md_batch: (vec record { text; text }) -> (variant { Ok: nat32; Err: text });
+
+  // Checksum Verification & File Management
+  get_skill_checksum: (text) -> (opt text) query;
+  get_skill_file_checksums: (text) -> (opt vec record { text; text }) query;
+  get_skill_file: (text, text) -> (opt SkillFile) query;
+  get_skill_files: (text) -> (opt vec SkillFile) query;
+  verify_file_checksum: (text, text, text) -> (variant { Ok: FileVerifyResult; Err: text }) query;
+  verify_skill_files: (text, vec record { text; text }) -> (variant { Ok: SkillVerifyResult; Err: text }) query;
+  verify_skills_batch: (vec record { text; text }) -> (vec record { text; bool; opt text }) query;
+  set_skill_files: (text, vec SkillFile) -> (variant { Ok: text; Err: text });
+  add_skill_file: (text, SkillFile) -> (variant { Ok: text; Err: text });
+
+  // Analysis (legacy HTTP outcall path - deprecated, use job queue instead)
+  analyze_skill: (text, AnalysisModel) -> (variant { Ok: AnalysisResult; Err: text });
+
+  // Analysis Job Queue (TEE worker pulls jobs)
+  request_analysis: (text, AnalysisModel) -> (variant { Ok: text; Err: text });
+  get_job_status: (text) -> (opt record { JobStatus; opt text }) query;
+  get_analyzed_models: (text) -> (vec text) query;
+  claim_pending_jobs: (nat32) -> (variant { Ok: vec PendingJob; Err: text });
+  submit_job_result: (text, text) -> (variant { Ok; Err: text });
+  submit_job_result_with_metadata: (text, text, text, text) -> (variant { Ok; Err: text });
+  submit_job_error: (text, text) -> (variant { Ok; Err: text });
+  add_worker: (principal) -> (variant { Ok; Err: text });
+  remove_worker: (principal) -> (variant { Ok; Err: text });
+  get_workers: () -> (vec principal) query;
+  get_pending_job_count: () -> (nat64) query;
+
+  // Enrichment Job Queue (TEE worker fetches SKILL.md from GitHub)
+  request_enrichment: (text, bool) -> (variant { Ok: text; Err: text });
+  queue_enrichment_batch: (nat32, bool) -> (variant { Ok: record { nat32; nat32 }; Err: text });
+  claim_enrichment_jobs: (nat32) -> (variant { Ok: vec PendingEnrichmentJob; Err: text });
+  submit_enrichment_result: (text, EnrichmentResult) -> (variant { Ok; Err: text });
+  submit_enrichment_error: (text, text) -> (variant { Ok; Err: text });
+  get_enrichment_job_status: (text) -> (opt record { EnrichmentJobStatus; opt text }) query;
+  get_pending_enrichment_count: () -> (nat64) query;
+
+  // Job Cleanup (admin/worker)
+  cleanup_jobs: () -> (variant { Ok: record { nat64; nat64 }; Err: text });
+
+  // Stats & Rating Queries
+  get_stats: () -> (nat64, nat64, nat64, nat64) query;
+  get_analysis_stats: () -> (nat64, nat64, nat64, nat64) query;
+  get_skills_with_flags: () -> (vec record { Skill; vec RatingFlag }) query;
+  get_skill_topic_rating: (text, RatingTopic) -> (opt TopicRating) query;
+  get_skills_by_topic_rating: (RatingTopic, nat32) -> (vec Skill) query;
+
+  // History & Verification
+  get_analysis_history: (text) -> (vec SkillAnalysis) query;
+  get_file_history: (text) -> (vec SkillFileVersion) query;
+  get_current_file_checksums: (text) -> (vec record { text; text }) query;
+  verify_local_checksum: (text, text, text) -> (record { bool; opt text }) query;
+  get_all_analysis_history: (nat32, nat32) -> (record { vec record { text; SkillAnalysis }; nat32 }) query;
+  get_analysis_history_stats: () -> (nat64, nat64) query;
+}

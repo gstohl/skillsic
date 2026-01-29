@@ -1,0 +1,25 @@
+{
+  "name": "skillsic-tee-worker",
+  "version": "1.0.0",
+  "description": "Phala TEE worker for secure AI skill analysis - decrypts API keys inside TEE enclave and calls Anthropic",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@dfinity/agent": "^3.4.3",
+    "@dfinity/candid": "^3.4.3",
+    "@dfinity/identity": "^3.4.3",
+    "@dfinity/principal": "^3.4.3",
+    "@hono/node-server": "^1.13.0",
+    "@phala/dstack-sdk": "^0.5.7",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

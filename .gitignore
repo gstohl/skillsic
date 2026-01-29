@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+package-lock.json
+bun.lock
+
+# Build outputs
+dist/
+target/
+.dfx/
+
+# DFX generated
+.env
+canister/.env
+canister/.dfx/
+canister/target/
+
+# Scripts (internal tooling)
+scripts/
+
+# Phala config (contains deployment IDs)
+tee-worker/.phala/
+tee-worker/.phala-cloud/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Test files
+*.test.ts.snap
+
+# Internal docs (contains local paths)
+AGENT.md

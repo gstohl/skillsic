@@ -1,0 +1,168 @@
+/* skillsic - Techy Terminal Aesthetic */
+
+:root {
+  /* Core colors - terminal inspired */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
+  --bg-hover: #222222;
+  
+  /* Accent - electric cyan/green */
+  --accent-primary: #00ff88;
+  --accent-secondary: #00d4ff;
+  --accent-dim: #00ff8833;
+  
+  /* Text */
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  
+  /* Borders */
+  --border-color: #2a2a2a;
+  --border-hover: #3a3a3a;
+  
+  /* Rating colors */
+  --rating-5: #00ff88;
+  --rating-4: #88ff00;
+  --rating-3: #ffcc00;
+  --rating-2: #ff8800;
+  --rating-1: #ff4444;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  
+  /* Effects */
+  --glow: 0 0 20px var(--accent-dim);
+  --glow-strong: 0 0 30px var(--accent-primary);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--accent-secondary);
+  text-shadow: var(--glow);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+/* Code blocks */
+code, pre {
+  font-family: var(--font-mono);
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+code {
+  padding: 2px 6px;
+  font-size: var(--font-size-sm);
+}
+
+pre {
+  padding: var(--space-md);
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+/* Buttons */
+button {
+  font-family: var(--font-mono);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* Input */
+input, textarea {
+  font-family: var(--font-mono);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow: var(--glow);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Terminal prompt effect */
+.prompt::before {
+  content: '$ ';
+  color: var(--accent-primary);
+}
+
+
+
+

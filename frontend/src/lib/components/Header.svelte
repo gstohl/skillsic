@@ -42,6 +42,7 @@
 
 
     <div class="auth">
+      <a href="https://github.com/gstohl/skillsic" target="_blank" rel="noopener" class="github-link">github</a>
       {#if $isAuthenticated}
         <div class="user-info">
           <span class="principal">{$principalString}</span>
@@ -161,7 +162,8 @@
   }
 
   .logout-btn,
-  .settings-link {
+  .settings-link,
+  .github-link {
     background: transparent;
     color: var(--text-muted);
     font-size: var(--font-size-xs);
@@ -172,7 +174,8 @@
   }
 
   .logout-btn:hover,
-  .settings-link:hover {
+  .settings-link:hover,
+  .github-link:hover {
     color: var(--accent-primary);
   }
 

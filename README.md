@@ -131,7 +131,6 @@ cd tee-worker && npm install && npm run dev
 - **TEE**: Phala Network dstack
 - **AI**: Claude (Haiku/Sonnet/Opus) via Anthropic API
 - **CLI**: TypeScript + Commander
-- **Fonts**: JetBrains Mono (self-hosted)
 
 ## License
 

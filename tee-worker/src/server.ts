@@ -30,7 +30,7 @@ import {
   type EnrichmentResult,
 } from './canister-client.js';
 
-const WORKER_VERSION = '1.9.6';
+const WORKER_VERSION = '1.9.7';
 
 const app = new Hono();
 
@@ -158,7 +158,7 @@ app.post('/analyze', async (c) => {
     }
 
     // Step 2: Build prompt and call Anthropic
-    const model = body.model || 'claude-sonnet-4-20250514';
+    const model = body.model || 'claude-haiku-4-5';
     if (!body.prompt_template) {
       return c.json({ error: 'Missing prompt_template - required for direct /analyze endpoint' }, 400);
     }
@@ -225,7 +225,7 @@ app.post('/analyze-batch', async (c) => {
       return c.json({ error: 'Encrypted API key required' }, 400);
     }
 
-    const model = body.model || 'claude-sonnet-4-20250514';
+    const model = body.model || 'claude-haiku-4-5';
     const results = [];
 
     for (const skill of body.skills) {

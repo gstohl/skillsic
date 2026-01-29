@@ -14,26 +14,23 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize, PartialEq)]
 pub enum AnalysisModel {
     Haiku,
-    Sonnet,
     Opus,
 }
 
 impl AnalysisModel {
     fn to_model_id(&self) -> &'static str {
+        // Using aliases - automatically points to latest model snapshot
         match self {
-            AnalysisModel::Haiku => "claude-haiku-4-5-20251001",
-            AnalysisModel::Sonnet => "claude-sonnet-4-5-20250929",
-            AnalysisModel::Opus => "claude-opus-4-5-20251101",
+            AnalysisModel::Haiku => "claude-haiku-4-5",
+            AnalysisModel::Opus => "claude-opus-4-5",
         }
     }
 
     fn cost_cycles(&self) -> u128 {
         // IC HTTP outcall cost: ~400M base + (req+resp bytes) * ~10K per byte
         // TEE requests send skill data (~10-50KB), max_response_bytes=200KB
-        // Actual usage ~2.1B for Sonnet — add ~20% headroom
         match self {
             AnalysisModel::Haiku => 800_000_000,
-            AnalysisModel::Sonnet => 2_600_000_000,
             AnalysisModel::Opus => 10_000_000_000,
         }
     }
@@ -42,8 +39,7 @@ impl AnalysisModel {
     fn strength(&self) -> u8 {
         match self {
             AnalysisModel::Haiku => 1,
-            AnalysisModel::Sonnet => 2,
-            AnalysisModel::Opus => 3,
+            AnalysisModel::Opus => 2,
         }
     }
 
@@ -51,8 +47,6 @@ impl AnalysisModel {
     fn from_model_id(model_id: &str) -> Option<Self> {
         if model_id.contains("opus") {
             Some(AnalysisModel::Opus)
-        } else if model_id.contains("sonnet") {
-            Some(AnalysisModel::Sonnet)
         } else if model_id.contains("haiku") {
             Some(AnalysisModel::Haiku)
         } else {

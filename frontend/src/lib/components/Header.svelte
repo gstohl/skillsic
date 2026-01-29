@@ -31,6 +31,7 @@
       <span class="logo-text">skillsic</span>
       <span class="logo-bracket">]</span>
       <span class="logo-tld">.com</span>
+      <span class="beta-badge">beta</span>
     </div>
     
     <nav class="nav">
@@ -99,6 +100,18 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     margin-left: 2px;
+  }
+
+  .beta-badge {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--bg-primary);
+    background: var(--accent-secondary);
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .nav {

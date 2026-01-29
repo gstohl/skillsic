@@ -32,11 +32,10 @@
   // Models that have already analyzed this skill
   let analyzedModels: string[] = [];
   
-  // All available models with their canister IDs
-  const allModels: Array<{ id: 'Haiku' | 'Sonnet' | 'Opus', modelId: string, label: string, strength: number }> = [
-    { id: 'Haiku', modelId: 'claude-haiku-4-5-20251001', label: 'Haiku', strength: 1 },
-    { id: 'Sonnet', modelId: 'claude-sonnet-4-5-20250929', label: 'Sonnet', strength: 2 },
-    { id: 'Opus', modelId: 'claude-opus-4-5-20251101', label: 'Opus', strength: 3 },
+  // All available models with their canister IDs (using aliases for latest)
+  const allModels: Array<{ id: 'Haiku' | 'Opus', modelId: string, label: string, strength: number }> = [
+    { id: 'Haiku', modelId: 'claude-haiku-4-5', label: 'Haiku 4.5', strength: 1 },
+    { id: 'Opus', modelId: 'claude-opus-4-5', label: 'Opus 4.5', strength: 2 },
   ];
   
   // Models available for new analysis (not yet used)

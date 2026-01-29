@@ -4,7 +4,9 @@
   import Header from './lib/components/Header.svelte';
   import Skills from './lib/pages/Skills.svelte';
   import SkillPage from './lib/pages/SkillPage.svelte';
+  import Builder from './lib/pages/Builder.svelte';
   import History from './lib/pages/History.svelte';
+  import Queue from './lib/pages/Queue.svelte';
   import Docs from './lib/pages/Docs.svelte';
   import Api from './lib/pages/Api.svelte';
   import Settings from './lib/pages/Settings.svelte';
@@ -22,7 +24,9 @@
     <main class="main">
       <Route path="/" component={Skills} />
       <Route path="/skill/*wildcard" component={SkillPage} />
+      <Route path="/builder/:owner" let:params><Builder owner={params.owner} /></Route>
       <Route path="/history" component={History} />
+      <Route path="/queue" component={Queue} />
       <Route path="/docs" component={Docs} />
       <Route path="/api" component={Api} />
       <Route path="/settings" component={Settings} />
@@ -33,8 +37,7 @@
         <div class="footer-left">
           <span class="footer-text">
             powered by <a href="https://internetcomputer.org" target="_blank" rel="noopener">ICP</a>
-            | analyzed by <a href="https://anthropic.com" target="_blank" rel="noopener">Claude</a>
-            | installs via <a href="https://skills.sh" target="_blank" rel="noopener">skills.sh</a>
+            + <a href="https://phala.network" target="_blank" rel="noopener">Phala TEE</a>
           </span>
         </div>
         <div class="footer-right">

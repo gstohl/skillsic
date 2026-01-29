@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { link } from 'svelte-routing';
+  import { link, navigate } from 'svelte-routing';
   import type { Skill } from '../types';
 
   export let skill: Skill;
@@ -42,12 +42,18 @@
     copied = true;
     setTimeout(() => (copied = false), 2000);
   }
+
+  function handleOwnerClick(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/builder/${skill.owner}`);
+  }
 </script>
 
 <a href={skillHref} use:link class="skill-card-link">
   <header class="card-header">
     <div class="skill-id">
-      <span class="owner">{skill.owner}</span>
+      <button class="owner-link" on:click={handleOwnerClick}>{skill.owner}</button>
       <span class="separator">/</span>
       <span class="repo">{skill.repo}</span>
     </div>
@@ -133,8 +139,19 @@
     white-space: nowrap;
   }
 
-  .owner {
+  .owner-link {
     color: var(--text-secondary);
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .owner-link:hover {
+    color: var(--accent-primary);
+    text-decoration: underline;
   }
 
   .separator {

@@ -60,9 +60,9 @@
     <div class="filter">
       <label class="filter-label">sort:</label>
       <select class="filter-select" on:change={handleSortChange}>
+        <option value="rating">rating</option>
         <option value="installs">installs</option>
         <option value="stars">stars</option>
-        <option value="rating">rating</option>
         <option value="recent">recent</option>
         <option value="name">name</option>
       </select>

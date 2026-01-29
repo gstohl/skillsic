@@ -30,7 +30,7 @@ import {
   type EnrichmentResult,
 } from './canister-client.js';
 
-const WORKER_VERSION = '1.9.7';
+const WORKER_VERSION = '1.9.9';
 
 const app = new Hono();
 
@@ -81,13 +81,24 @@ async function deriveEncryptionKey(): Promise<Uint8Array> {
 // Health / Info
 // ============================================================================
 
-app.get('/', (c) => {
+app.get('/', async (c) => {
+  let teeInfo = null;
+  try {
+    const client = getDstackClient();
+    teeInfo = await client.info();
+  } catch (e) {
+    // TEE info not available in dev mode
+  }
+  
   return c.json({
     service: 'skillsic-tee-worker',
     version: WORKER_VERSION,
     status: 'running',
     tee: !DEV_MODE,
     description: 'Secure skill analysis via Phala TEE — API keys never leave the enclave',
+    app_id: teeInfo?.app_id || null,
+    instance_id: teeInfo?.instance_id || null,
+    compose_hash: teeInfo?.compose_hash || null,
   });
 });
 
@@ -121,6 +132,33 @@ app.get('/public-key', async (c) => {
     }
     const message = error instanceof Error ? error.message : String(error);
     return c.json({ error: 'Failed to derive TEE key', detail: message }, 500);
+  }
+});
+
+// ============================================================================
+// GET /whoami — Returns the worker's IC principal (for registration)
+// ============================================================================
+
+app.get('/whoami', async (c) => {
+  try {
+    const keyBytes = await deriveEncryptionKey();
+    const principal = getWorkerPrincipal(keyBytes);
+
+    return c.json({
+      principal,
+      version: WORKER_VERSION,
+      note: 'Register this principal as a worker on the canister using add_worker(principal)',
+    });
+  } catch (error) {
+    if (DEV_MODE) {
+      return c.json({
+        principal: 'dev-mode-no-principal',
+        version: WORKER_VERSION,
+        note: 'DEV MODE — no real TEE identity available',
+      });
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return c.json({ error: 'Failed to derive worker identity', detail: message }, 500);
   }
 });
 

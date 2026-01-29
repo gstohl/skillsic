@@ -275,6 +275,7 @@ const idlFactory = ({ IDL: _IDL }: any) => {
     list_skills_filtered: IDL.Func([IDL.Nat32, IDL.Nat32, IDL.Text, IDL.Text, IDL.Text], [IDL.Vec(SkillIDL), IDL.Nat32], ['query']),
     search_skills: IDL.Func([IDL.Text], [IDL.Vec(SkillSearchResultIDL)], ['query']),
     get_skills_by_category: IDL.Func([IDL.Text], [IDL.Vec(SkillIDL)], ['query']),
+    get_skills_by_owner: IDL.Func([IDL.Text], [IDL.Vec(SkillIDL)], ['query']),
     get_skills_with_dependencies: IDL.Func([], [IDL.Vec(SkillIDL)], ['query']),
     get_skills_providing_mcp: IDL.Func([], [IDL.Vec(SkillIDL)], ['query']),
     get_top_rated_skills: IDL.Func([IDL.Nat32], [IDL.Vec(SkillIDL)], ['query']),
@@ -302,11 +303,37 @@ const idlFactory = ({ IDL: _IDL }: any) => {
     get_job_status: IDL.Func([IDL.Text], [IDL.Opt(IDL.Tuple(JobStatusIDL, IDL.Opt(IDL.Text)))], ['query']),
     get_analyzed_models: IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
     get_pending_job_count: IDL.Func([], [IDL.Nat64], ['query']),
+    list_analysis_jobs: IDL.Func([IDL.Nat32], [IDL.Vec(IDL.Record({
+      job_id: IDL.Text,
+      skill_id: IDL.Text,
+      model: IDL.Text,
+      status: JobStatusIDL,
+      requester: IDL.Principal,
+      created_at: IDL.Nat64,
+      updated_at: IDL.Nat64,
+      error: IDL.Opt(IDL.Text),
+    }))], ['query']),
+    cancel_analysis_job: IDL.Func([IDL.Text], [ResultText], []),
 
     // Enrichment Job Queue
     request_enrichment: IDL.Func([IDL.Text, IDL.Bool], [ResultTextText], []),
     get_enrichment_job_status: IDL.Func([IDL.Text], [IDL.Opt(IDL.Tuple(EnrichmentJobStatusIDL, IDL.Opt(IDL.Text)))], ['query']),
     get_pending_enrichment_count: IDL.Func([], [IDL.Nat64], ['query']),
+    list_enrichment_jobs: IDL.Func([IDL.Nat32], [IDL.Vec(IDL.Record({
+      job_id: IDL.Text,
+      skill_id: IDL.Text,
+      owner: IDL.Text,
+      repo: IDL.Text,
+      status: EnrichmentJobStatusIDL,
+      requester: IDL.Principal,
+      created_at: IDL.Nat64,
+      updated_at: IDL.Nat64,
+      error: IDL.Opt(IDL.Text),
+    }))], ['query']),
+    cancel_enrichment_job: IDL.Func([IDL.Text], [ResultText], []),
+    
+    // Queue Stats
+    get_queue_stats: IDL.Func([], [IDL.Nat64, IDL.Nat64, IDL.Nat64, IDL.Nat64, IDL.Nat64, IDL.Nat64], ['query']),
 
     // Analysis History
     get_analysis_history: IDL.Func([IDL.Text], [IDL.Vec(SkillAnalysisIDL)], ['query']),
@@ -603,6 +630,13 @@ export async function getSkill(id: string): Promise<Skill | null> {
 export async function getSkillsByCategory(category: string): Promise<Skill[]> {
   const actor = await getActor();
   const raw = await actor.get_skills_by_category(category);
+  return raw.map(convertSkill);
+}
+
+/** Get skills by owner */
+export async function getSkillsByOwner(owner: string): Promise<Skill[]> {
+  const actor = await getActor();
+  const raw = await actor.get_skills_by_owner(owner);
   return raw.map(convertSkill);
 }
 
@@ -995,4 +1029,103 @@ function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// ============================================================================
+// Queue API
+// ============================================================================
 
+export interface AnalysisJobSummary {
+  job_id: string;
+  skill_id: string;
+  model: string;
+  status: string;
+  requester: string;
+  created_at: bigint;
+  updated_at: bigint;
+  error: string | null;
+}
+
+export interface EnrichmentJobSummary {
+  job_id: string;
+  skill_id: string;
+  owner: string;
+  repo: string;
+  status: string;
+  requester: string;
+  created_at: bigint;
+  updated_at: bigint;
+  error: string | null;
+}
+
+export interface QueueStats {
+  analysis_pending: number;
+  analysis_processing: number;
+  analysis_total: number;
+  enrichment_pending: number;
+  enrichment_processing: number;
+  enrichment_total: number;
+}
+
+/** Get queue statistics */
+export async function getQueueStats(): Promise<QueueStats> {
+  const actor = await getActor();
+  const [ap, apr, at, ep, epr, et] = await actor.get_queue_stats();
+  return {
+    analysis_pending: Number(ap),
+    analysis_processing: Number(apr),
+    analysis_total: Number(at),
+    enrichment_pending: Number(ep),
+    enrichment_processing: Number(epr),
+    enrichment_total: Number(et),
+  };
+}
+
+/** List recent analysis jobs */
+export async function listAnalysisJobs(limit: number): Promise<AnalysisJobSummary[]> {
+  const actor = await getActor();
+  const raw = await actor.list_analysis_jobs(limit);
+  return raw.map((j: any) => ({
+    job_id: j.job_id,
+    skill_id: j.skill_id,
+    model: j.model,
+    status: unwrapVariantKey(j.status),
+    requester: j.requester.toString(),
+    created_at: j.created_at,
+    updated_at: j.updated_at,
+    error: unwrapOpt(j.error),
+  }));
+}
+
+/** List recent enrichment jobs */
+export async function listEnrichmentJobs(limit: number): Promise<EnrichmentJobSummary[]> {
+  const actor = await getActor();
+  const raw = await actor.list_enrichment_jobs(limit);
+  return raw.map((j: any) => ({
+    job_id: j.job_id,
+    skill_id: j.skill_id,
+    owner: j.owner,
+    repo: j.repo,
+    status: unwrapVariantKey(j.status),
+    requester: j.requester.toString(),
+    created_at: j.created_at,
+    updated_at: j.updated_at,
+    error: unwrapOpt(j.error),
+  }));
+}
+
+/** Cancel an analysis job (must be requester or admin) */
+export async function cancelAnalysisJob(agent: HttpAgent, jobId: string): Promise<void> {
+  const actor = getAuthenticatedActor(agent);
+  const result = await actor.cancel_analysis_job(jobId);
+  if ('Err' in result) {
+    throw new Error(result.Err);
+  }
+}
+
+/** Cancel an enrichment job (must be requester or admin) */
+export async function cancelEnrichmentJob(agent: HttpAgent, jobId: string): Promise<void> {
+  const actor = getAuthenticatedActor(agent);
+  const result = await actor.cancel_enrichment_job(jobId);
+  if ('Err' in result) {
+    throw new Error(result.Err);
+  }
+}

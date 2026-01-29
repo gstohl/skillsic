@@ -15,5 +15,12 @@
   {
     "match": ".well-known/*",
     "ignore": false
+  },
+  {
+    "match": ".well-known/ii-alternative-origins",
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
   }
 ]

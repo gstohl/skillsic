@@ -14,6 +14,12 @@ const II_URL = import.meta.env.PROD
   ? 'https://identity.ic0.app'
   : 'http://localhost:4943?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai';
 
+// Canonical origin for principal derivation - ensures same principal across all access methods
+// Users get the same principal whether they access via skillsic.com, www.skillsic.com, or canister URL
+const DERIVATION_ORIGIN = import.meta.env.PROD
+  ? 'https://skillsic.com'
+  : undefined;
+
 // Initialize auth client
 export async function initAuth(): Promise<void> {
   const client = await AuthClient.create();
@@ -47,6 +53,9 @@ export async function login(): Promise<boolean> {
   return new Promise((resolve) => {
     client.login({
       identityProvider: II_URL,
+      // derivationOrigin ensures users get the SAME principal regardless of how they access the site
+      // (skillsic.com, www.skillsic.com, or fh3vn-4yaaa-aaaak-qvwga-cai.icp0.io)
+      derivationOrigin: DERIVATION_ORIGIN,
       onSuccess: () => {
         authClient.set(client);
         isAuthenticated.set(true);

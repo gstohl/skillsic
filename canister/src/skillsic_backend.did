@@ -1,4 +1,4 @@
-type AnalysisModel = variant { Haiku; Sonnet; Opus };
+type AnalysisModel = variant { Haiku; Opus };
 
 // Rating System
 type RatingTopic = variant {
@@ -297,6 +297,7 @@ service : {
   get_skills_providing_mcp: () -> (vec Skill) query;
   get_top_rated_skills: (nat32) -> (vec Skill) query;
   get_categories: () -> (vec text) query;
+  get_skills_by_owner: (text) -> (vec Skill) query;
   get_unanalyzed_skills: () -> (vec Skill) query;
   get_install_command: (text) -> (opt text) query;
   record_install: (text) -> (variant { Ok: nat64; Err: text });
@@ -333,6 +334,17 @@ service : {
   remove_worker: (principal) -> (variant { Ok; Err: text });
   get_workers: () -> (vec principal) query;
   get_pending_job_count: () -> (nat64) query;
+  list_analysis_jobs: (nat32) -> (vec record { 
+    job_id: text; 
+    skill_id: text; 
+    model: text; 
+    status: JobStatus; 
+    requester: principal;
+    created_at: nat64; 
+    updated_at: nat64; 
+    error: opt text 
+  }) query;
+  cancel_analysis_job: (text) -> (variant { Ok; Err: text });
 
   // Enrichment Job Queue (TEE worker fetches SKILL.md from GitHub)
   request_enrichment: (text, bool) -> (variant { Ok: text; Err: text });
@@ -342,6 +354,21 @@ service : {
   submit_enrichment_error: (text, text) -> (variant { Ok; Err: text });
   get_enrichment_job_status: (text) -> (opt record { EnrichmentJobStatus; opt text }) query;
   get_pending_enrichment_count: () -> (nat64) query;
+  list_enrichment_jobs: (nat32) -> (vec record { 
+    job_id: text; 
+    skill_id: text; 
+    owner: text; 
+    repo: text; 
+    status: EnrichmentJobStatus; 
+    requester: principal;
+    created_at: nat64; 
+    updated_at: nat64; 
+    error: opt text 
+  }) query;
+  cancel_enrichment_job: (text) -> (variant { Ok; Err: text });
+  
+  // Queue Stats
+  get_queue_stats: () -> (nat64, nat64, nat64, nat64, nat64, nat64) query;
 
   // Job Cleanup (admin/worker)
   cleanup_jobs: () -> (variant { Ok: record { nat64; nat64 }; Err: text });

@@ -95,8 +95,8 @@
 </script>
 
 <svelte:head>
-  <title>Analysis History | skillsic</title>
-  <meta name="description" content="Browse the complete analysis history of Claude Code skills on skillsic. Every analysis with full provenance." />
+  <title>Analysis History | skillsic - AI Coding Agent Skills</title>
+  <meta name="description" content="Browse the complete analysis history of skills for Claude Code, Cursor, Windsurf & Cline. Every analysis with full provenance on ICP." />
 </svelte:head>
 
 <div class="history-page">

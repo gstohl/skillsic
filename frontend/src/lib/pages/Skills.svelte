@@ -80,10 +80,10 @@
 </script>
 
 <svelte:head>
-  <title>skillsic | Curated Skills for Claude Code</title>
-  <meta name="description" content="Discover, rate, and install curated skills for Claude Code. AI-powered skill analysis and curation on ICP." />
-  <meta property="og:title" content="skillsic - Curated Skills for Claude Code" />
-  <meta property="og:description" content="Discover, rate, and install curated skills for Claude Code. AI-powered skill analysis and curation on ICP." />
+  <title>skillsic | Safe Skills for Claude Code, Cursor, Windsurf, Cline & AI Coding Agents</title>
+  <meta name="description" content="Discover and install safe, analyzed skills for Claude Code, Cursor, Windsurf, Cline, and other AI coding agents. Security-first skill curation powered by AI analysis on ICP." />
+  <meta property="og:title" content="skillsic - Safe Skills for AI Coding Agents" />
+  <meta property="og:description" content="Security-first skill discovery for Claude Code, Cursor, Windsurf, Cline and more. AI-powered analysis ensures safe installations." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://skillsic.com/" />
 </svelte:head>

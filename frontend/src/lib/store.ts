@@ -5,7 +5,7 @@ import type { Skill, SortOption, Stats, AnalysisModel, ViewMode } from './types'
 export const skills = writable<Skill[]>([]);
 export const searchQuery = writable('');
 export const selectedCategory = writable<string | null>(null);
-export const sortBy = writable<SortOption>('installs');
+export const sortBy = writable<SortOption>('rating');
 export const isLoading = writable(false);
 export const selectedModel = writable<AnalysisModel>('Sonnet');
 export const viewMode = writable<ViewMode>('cards');

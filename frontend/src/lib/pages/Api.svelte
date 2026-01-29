@@ -9,8 +9,8 @@
 </script>
 
 <svelte:head>
-  <title>API Reference | skillsic</title>
-  <meta name="description" content="skillsic canister API reference. Query skills, analysis results, and metadata from the ICP backend." />
+  <title>API Reference | skillsic - Skills API for AI Coding Agents</title>
+  <meta name="description" content="skillsic REST API reference. Query skills for Claude Code, Cursor, Windsurf & Cline. Analysis results and metadata from ICP." />
 </svelte:head>
 
 <div class="api">

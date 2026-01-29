@@ -33,9 +33,36 @@
   let analyzedModels: string[] = [];
   
   // All available models with their canister IDs (using aliases for latest)
-  const allModels: Array<{ id: 'Haiku' | 'Opus', modelId: string, label: string, strength: number }> = [
-    { id: 'Haiku', modelId: 'claude-haiku-4-5', label: 'Haiku 4.5', strength: 1 },
-    { id: 'Opus', modelId: 'claude-opus-4-5', label: 'Opus 4.5', strength: 2 },
+  const allModels: Array<{ 
+    id: 'Haiku' | 'Opus', 
+    modelId: string, 
+    label: string, 
+    strength: number,
+    description: string,
+    speed: string,
+    cost: string,
+    icon: string
+  }> = [
+    { 
+      id: 'Haiku', 
+      modelId: 'claude-haiku-4-5', 
+      label: 'Haiku 4.5', 
+      strength: 1,
+      description: 'Fast & efficient',
+      speed: '~15s',
+      cost: '~$0.01',
+      icon: '⚡'
+    },
+    { 
+      id: 'Opus', 
+      modelId: 'claude-opus-4-5', 
+      label: 'Opus 4.5', 
+      strength: 2,
+      description: 'Deep analysis',
+      speed: '~60s',
+      cost: '~$0.15',
+      icon: '🔬'
+    },
   ];
   
   // Models available for new analysis (not yet used)
@@ -288,10 +315,10 @@
 
   // SEO: dynamic page title and meta description
   $: pageTitle = skill
-    ? `${skill.name} by ${skill.owner} | skillsic`
+    ? `${skill.name} by ${skill.owner} - AI Coding Agent Skill | skillsic`
     : 'Loading... | skillsic';
   $: pageDescription = skill
-    ? (skill.analysis?.summary || skill.description || `Claude Code skill: ${skill.name}`)
+    ? (skill.analysis?.summary || skill.description || `Skill for Claude Code, Cursor, Windsurf & Cline: ${skill.name}`)
     : 'Loading skill details...';
 
   let copied = false;
@@ -415,12 +442,12 @@
   <title>{pageTitle}</title>
   <meta name="description" content={pageDescription} />
   {#if skill}
-    <meta property="og:title" content="{skill.name} - Claude Code Skill" />
+    <meta property="og:title" content="{skill.name} - AI Coding Agent Skill" />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://skillsic.com/skill/{skill.id}" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="{skill.name} - Claude Code Skill" />
+    <meta name="twitter:title" content="{skill.name} - Skill for Claude Code, Cursor & more" />
     <meta name="twitter:description" content={pageDescription} />
   {/if}
 </svelte:head>
@@ -441,7 +468,7 @@
     <nav class="breadcrumb">
       <a href="/" class="crumb-link">skills</a>
       <span class="crumb-sep">/</span>
-      <span class="crumb-owner">{skill.owner}</span>
+      <a href="/builder/{skill.owner}" use:link class="crumb-owner crumb-link">{skill.owner}</a>
       <span class="crumb-sep">/</span>
       <span class="crumb-repo">{skill.repo}</span>
       <span class="crumb-sep">/</span>
@@ -453,7 +480,7 @@
         <div class="skill-identity">
           <h1 class="skill-name">{skill.name}</h1>
           <div class="skill-meta">
-            <span class="owner">{skill.owner}</span>
+            <a href="/builder/{skill.owner}" use:link class="owner owner-link">{skill.owner}</a>
             <span class="sep">/</span>
             <span class="repo">{skill.repo}</span>
             {#if skill.stars > 0}
@@ -860,22 +887,23 @@
           {#if canReanalyze && availableModels.length > 0}
             <span class="meta-sep">|</span>
             <span class="analyze-with-model">
-              <span class="analyze-label">analyze with:</span>
+              <span class="analyze-label">also analyze with:</span>
               {#each availableModels as model}
                 <button 
-                  class="model-btn" 
+                  class="model-btn-enhanced" 
                   class:active={$selectedModel === model.id}
                   on:click={() => { $selectedModel = model.id; handleAnalyze(); }}
                   disabled={analyzing}
-                  title="Analyze with {model.label}"
+                  title="{model.description} • {model.speed} • {model.cost}"
                 >
-                  {model.label}
+                  <span class="model-btn-icon">{model.icon}</span>
+                  <span class="model-btn-label">{model.label}</span>
                 </button>
               {/each}
             </span>
           {:else if canReanalyze && availableModels.length === 0}
             <span class="meta-sep">|</span>
-            <span class="all-models-used">[all models used]</span>
+            <span class="all-models-done">✓ analyzed by all models</span>
           {/if}
           {#if canRefetch}
             <span class="meta-sep">|</span>
@@ -985,30 +1013,57 @@
         <div class="unanalyzed">
           <span class="unanalyzed-icon">[?]</span>
           <span>This skill has not been analyzed yet.</span>
-          {#if canAnalyze}
-            <div class="analyze-controls">
-              <select class="model-select" bind:value={$selectedModel} disabled={analyzing}>
-                <option value="Haiku">Haiku (fast)</option>
-                <option value="Sonnet">Sonnet (balanced)</option>
-                <option value="Opus">Opus (best)</option>
-              </select>
-              <button class="analyze-btn" on:click={handleAnalyze} disabled={analyzing}>
-                {analyzing ? 'analyzing...' : 'analyze'}
+        </div>
+        {#if canAnalyze}
+          <div class="model-picker">
+            <div class="model-picker-label">Select AI model for analysis:</div>
+            <div class="model-cards">
+              {#each allModels as model}
+                <button 
+                  class="model-card" 
+                  class:selected={$selectedModel === model.id}
+                  class:analyzing={analyzing && $selectedModel === model.id}
+                  on:click={() => $selectedModel = model.id}
+                  disabled={analyzing}
+                >
+                  <div class="model-card-icon">{model.icon}</div>
+                  <div class="model-card-info">
+                    <div class="model-card-name">{model.label}</div>
+                    <div class="model-card-desc">{model.description}</div>
+                  </div>
+                  <div class="model-card-meta">
+                    <span class="model-card-speed" title="Estimated time">{model.speed}</span>
+                    <span class="model-card-cost" title="Estimated cost">{model.cost}</span>
+                  </div>
+                  {#if $selectedModel === model.id}
+                    <div class="model-card-check">✓</div>
+                  {/if}
+                </button>
+              {/each}
+            </div>
+            <div class="analyze-action">
+              <button class="analyze-btn-large" on:click={handleAnalyze} disabled={analyzing}>
+                {#if analyzing}
+                  <span class="analyze-spinner"></span>
+                  analyzing with {allModels.find(m => m.id === $selectedModel)?.label}...
+                {:else}
+                  Analyze with {allModels.find(m => m.id === $selectedModel)?.label}
+                {/if}
               </button>
               {#if !skill.skill_md_content && !analyzing}
-                <span class="auto-fetch-note">(will auto-fetch SKILL.md)</span>
+                <span class="auto-fetch-note">Will auto-fetch SKILL.md from GitHub</span>
               {/if}
             </div>
-          {:else if $isAuthenticated && !$hasApiKey}
-            <div class="no-key-notice">
-              <a href="/settings" use:link>Add an API key</a> to analyze this skill
-            </div>
-          {:else if !$isAuthenticated}
-            <div class="no-key-notice">
-              Sign in to analyze this skill
-            </div>
-          {/if}
-        </div>
+          </div>
+        {:else if $isAuthenticated && !$hasApiKey}
+          <div class="no-key-notice">
+            <a href="/settings" use:link>Add an API key</a> to analyze this skill
+          </div>
+        {:else if !$isAuthenticated}
+          <div class="no-key-notice">
+            Sign in to analyze this skill
+          </div>
+        {/if}
         {#if enrichStatus}
           <div class="enrich-status">{enrichStatus}</div>
         {/if}
@@ -1132,6 +1187,10 @@
     color: var(--text-secondary);
   }
 
+  .crumb-owner:hover {
+    color: var(--accent-primary);
+  }
+
   .crumb-repo {
     color: var(--accent-secondary);
   }
@@ -1168,6 +1227,14 @@
   }
 
   .owner { color: var(--text-secondary); }
+  .owner-link { 
+    color: var(--text-secondary); 
+    transition: color 0.15s ease;
+  }
+  .owner-link:hover { 
+    color: var(--accent-primary); 
+    text-decoration: underline;
+  }
   .sep { color: var(--border-color); }
   .repo { color: var(--accent-secondary); }
 
@@ -1696,44 +1763,153 @@
     flex-wrap: wrap;
   }
   .unanalyzed-icon { color: var(--text-secondary); font-size: var(--font-size-lg); }
-  .analyze-controls {
-    margin-left: auto;
+
+  /* Model Picker */
+  .model-picker {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: var(--space-lg);
+  }
+  .model-picker-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-md);
+  }
+  .model-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  .model-card {
+    position: relative;
     display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .model-card:hover {
+    border-color: var(--accent-secondary);
+    background: var(--bg-tertiary);
+  }
+  .model-card.selected {
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 136, 0.05);
+  }
+  .model-card.analyzing {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  .model-card:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .model-card-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .model-card-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .model-card-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: var(--font-size-md);
+    margin-bottom: 2px;
+  }
+  .model-card-desc {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+  .model-card-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .model-card-speed {
+    color: var(--accent-secondary);
+    font-size: 10px;
+    font-family: var(--font-mono);
+  }
+  .model-card-cost {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-family: var(--font-mono);
+  }
+  .model-card-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--accent-primary);
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .analyze-action {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     gap: var(--space-sm);
   }
-  .model-select {
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--font-size-xs);
-    font-family: var(--font-mono);
-    cursor: pointer;
-  }
-  .model-select:hover { border-color: var(--accent-primary); }
-  .model-select:disabled { opacity: 0.5; cursor: not-allowed; }
-  .analyze-btn {
+  .analyze-btn-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
     background: var(--accent-primary);
     color: var(--bg-primary);
-    padding: var(--space-xs) var(--space-md);
-    border-radius: 4px;
-    font-size: var(--font-size-xs);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: 6px;
+    font-size: var(--font-size-md);
     font-weight: 600;
-    transition: opacity 0.15s ease;
+    transition: all 0.15s ease;
+    min-width: 280px;
   }
-  .analyze-btn:hover { opacity: 0.9; }
-  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .analyze-btn-large:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  .analyze-btn-large:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+  }
+  .analyze-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--bg-primary);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
   .auto-fetch-note {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     font-style: italic;
   }
   .no-key-notice {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    margin-top: var(--space-sm);
+    margin-top: var(--space-md);
+    text-align: center;
+    padding: var(--space-lg);
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
   }
   .no-key-notice a {
     color: var(--accent-primary);
@@ -2034,33 +2210,41 @@
     color: var(--text-muted);
     font-size: var(--font-size-xs);
   }
-  .model-btn {
+  .model-btn-enhanced {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
     font-family: var(--font-mono);
-    padding: 2px 8px;
-    border-radius: 3px;
+    padding: 4px 10px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
   }
-  .model-btn:hover {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-  }
-  .model-btn.active {
+  .model-btn-enhanced:hover {
     border-color: var(--accent-primary);
     color: var(--accent-primary);
     background: var(--accent-dim);
+    transform: translateY(-1px);
   }
-  .model-btn:disabled {
+  .model-btn-enhanced:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: wait;
+    transform: none;
   }
-  .all-models-used {
-    color: var(--text-muted);
+  .model-btn-icon {
+    font-size: 12px;
+  }
+  .model-btn-label {
+    font-weight: 500;
+  }
+  .all-models-done {
+    color: var(--accent-primary);
     font-size: var(--font-size-xs);
+    font-weight: 500;
   }
 
   /* File History Section */

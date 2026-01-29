@@ -1471,6 +1471,107 @@ fn get_pending_job_count() -> u64 {
     })
 }
 
+/// Summary of an analysis job for the queue view
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+pub struct AnalysisJobSummary {
+    pub job_id: String,
+    pub skill_id: String,
+    pub model: String,
+    pub status: JobStatus,
+    pub requester: Principal,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub error: Option<String>,
+}
+
+/// Summary of an enrichment job for the queue view
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+pub struct EnrichmentJobSummary {
+    pub job_id: String,
+    pub skill_id: String,
+    pub owner: String,
+    pub repo: String,
+    pub status: EnrichmentJobStatus,
+    pub requester: Principal,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub error: Option<String>,
+}
+
+/// Query: list all analysis jobs (most recent first, limited)
+#[query]
+fn list_analysis_jobs(limit: u32) -> Vec<AnalysisJobSummary> {
+    JOBS.with(|j| {
+        let jobs = j.borrow();
+        let mut summaries: Vec<AnalysisJobSummary> = jobs.values().map(|job| {
+            AnalysisJobSummary {
+                job_id: job.id.clone(),
+                skill_id: job.skill_id.clone(),
+                model: match job.model {
+                    AnalysisModel::Haiku => "Haiku".to_string(),
+                    AnalysisModel::Opus => "Opus".to_string(),
+                },
+                status: job.status.clone(),
+                requester: job.requester,
+                created_at: job.created_at,
+                updated_at: job.updated_at,
+                error: job.error.clone(),
+            }
+        }).collect();
+        // Sort by created_at descending (most recent first)
+        summaries.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        summaries.truncate(limit as usize);
+        summaries
+    })
+}
+
+/// Query: list all enrichment jobs (most recent first, limited)
+#[query]
+fn list_enrichment_jobs(limit: u32) -> Vec<EnrichmentJobSummary> {
+    ENRICHMENT_JOBS.with(|j| {
+        let jobs = j.borrow();
+        let mut summaries: Vec<EnrichmentJobSummary> = jobs.values().map(|job| {
+            EnrichmentJobSummary {
+                job_id: job.id.clone(),
+                skill_id: job.skill_id.clone(),
+                owner: job.owner.clone(),
+                repo: job.repo.clone(),
+                status: job.status.clone(),
+                requester: job.requester,
+                created_at: job.created_at,
+                updated_at: job.updated_at,
+                error: job.error.clone(),
+            }
+        }).collect();
+        // Sort by created_at descending (most recent first)
+        summaries.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        summaries.truncate(limit as usize);
+        summaries
+    })
+}
+
+/// Query: get queue stats
+#[query]
+fn get_queue_stats() -> (u64, u64, u64, u64, u64, u64) {
+    let (analysis_pending, analysis_processing, analysis_total) = JOBS.with(|j| {
+        let jobs = j.borrow();
+        let pending = jobs.values().filter(|job| job.status == JobStatus::Pending).count() as u64;
+        let processing = jobs.values().filter(|job| job.status == JobStatus::Processing).count() as u64;
+        let total = jobs.len() as u64;
+        (pending, processing, total)
+    });
+    
+    let (enrichment_pending, enrichment_processing, enrichment_total) = ENRICHMENT_JOBS.with(|j| {
+        let jobs = j.borrow();
+        let pending = jobs.values().filter(|job| job.status == EnrichmentJobStatus::Pending).count() as u64;
+        let processing = jobs.values().filter(|job| job.status == EnrichmentJobStatus::Processing).count() as u64;
+        let total = jobs.len() as u64;
+        (pending, processing, total)
+    });
+    
+    (analysis_pending, analysis_processing, analysis_total, enrichment_pending, enrichment_processing, enrichment_total)
+}
+
 /// Cleanup old completed/failed jobs from both JOBS and ENRICHMENT_JOBS.
 /// Called automatically during submit_job_result and submit_enrichment_result.
 fn cleanup_old_jobs() {
@@ -1569,6 +1670,56 @@ fn cleanup_jobs() -> Result<(u64, u64), String> {
     let enrichment_after = ENRICHMENT_JOBS.with(|j| j.borrow().len()) as u64;
 
     Ok((jobs_before - jobs_after, enrichment_before - enrichment_after))
+}
+
+/// Cancel an analysis job. Only the original requester or an admin can cancel.
+#[update]
+fn cancel_analysis_job(job_id: String) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+    
+    JOBS.with(|j| {
+        let mut jobs = j.borrow_mut();
+        let job = jobs.get(&job_id).ok_or("Job not found")?;
+        
+        // Check authorization: must be requester or admin
+        if job.requester != caller && !is_admin() {
+            return Err("Unauthorized: only job requester or admin can cancel".to_string());
+        }
+        
+        // Can only cancel Pending or Processing jobs
+        if job.status != JobStatus::Pending && job.status != JobStatus::Processing {
+            return Err(format!("Cannot cancel job with status {:?}", job.status));
+        }
+        
+        // Remove the job
+        jobs.remove(&job_id);
+        Ok(())
+    })
+}
+
+/// Cancel an enrichment job. Only the original requester or an admin can cancel.
+#[update]
+fn cancel_enrichment_job(job_id: String) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+    
+    ENRICHMENT_JOBS.with(|j| {
+        let mut jobs = j.borrow_mut();
+        let job = jobs.get(&job_id).ok_or("Job not found")?;
+        
+        // Check authorization: must be requester or admin
+        if job.requester != caller && !is_admin() {
+            return Err("Unauthorized: only job requester or admin can cancel".to_string());
+        }
+        
+        // Can only cancel Pending or Processing jobs
+        if job.status != EnrichmentJobStatus::Pending && job.status != EnrichmentJobStatus::Processing {
+            return Err(format!("Cannot cancel job with status {:?}", job.status));
+        }
+        
+        // Remove the job
+        jobs.remove(&job_id);
+        Ok(())
+    })
 }
 
 // ============================================================================
@@ -2292,7 +2443,11 @@ fn list_skills_filtered(limit: u32, offset: u32, sort_by: String, search: String
             "rating" => all.sort_by(|a, b| {
                 let ra = a.analysis.as_ref().map_or(0.0, |a| a.ratings.overall);
                 let rb = b.analysis.as_ref().map_or(0.0, |a| a.ratings.overall);
-                rb.partial_cmp(&ra).unwrap_or(std::cmp::Ordering::Equal)
+                // Primary: rating descending, Secondary: installs descending
+                match rb.partial_cmp(&ra).unwrap_or(std::cmp::Ordering::Equal) {
+                    std::cmp::Ordering::Equal => b.install_count.cmp(&a.install_count),
+                    other => other,
+                }
             }),
             "name" => all.sort_by(|a, b| a.name.cmp(&b.name)),
             "recent" => all.sort_by(|a, b| b.updated_at.cmp(&a.updated_at)),
@@ -2305,6 +2460,22 @@ fn list_skills_filtered(limit: u32, offset: u32, sort_by: String, search: String
             .take(limit as usize)
             .collect();
         (page, filtered_total)
+    })
+}
+
+#[query]
+fn get_skills_by_owner(owner: String) -> Vec<Skill> {
+    SKILLS.with(|s| {
+        let skills = s.borrow();
+        let owner_lower = owner.to_lowercase();
+        let mut results: Vec<Skill> = skills
+            .values()
+            .filter(|skill| skill.owner.to_lowercase() == owner_lower)
+            .cloned()
+            .collect();
+        // Sort by install count descending
+        results.sort_by(|a, b| b.install_count.cmp(&a.install_count));
+        results
     })
 }
 

@@ -6,7 +6,7 @@
 
 services:
   worker:
-    image: gstohl/skillsic-tee-worker:v1.9.7
+    image: gstohl/skillsic-tee-worker:v1.9.9
     ports:
       - "3000:3000"
     environment:

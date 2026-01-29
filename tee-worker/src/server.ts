@@ -30,13 +30,15 @@ import {
   type EnrichmentResult,
 } from './canister-client.js';
 
-const WORKER_VERSION = '1.9.5';
+const WORKER_VERSION = '1.9.6';
 
 const app = new Hono();
 
 // Allow the ICP frontend to call /public-key from the browser
 app.use('*', cors({
   origin: [
+    'https://skillsic.com',
+    'https://www.skillsic.com',
     'https://fh3vn-4yaaa-aaaak-qvwga-cai.icp0.io',
     'https://fh3vn-4yaaa-aaaak-qvwga-cai.raw.icp0.io',
     'http://localhost:5173',  // dev
